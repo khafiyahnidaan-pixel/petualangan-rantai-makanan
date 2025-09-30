@@ -1,0 +1,428 @@
+
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Petualangan Riko di Hutan Ekosistem</title>
+<style>
+  body { margin:0; font-family: "Segoe UI", Roboto, Arial; background: linear-gradient(#bfe6c8,#89d199); }
+  .screen { width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; }
+  .game-wrap { width:1000px; height:600px; background: linear-gradient(#e8f7ea,#d9f0df); border-radius:16px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); overflow:hidden; position:relative; }
+  header { height:80px; display:flex; align-items:center; padding:12px 20px; gap:12px; }
+  .title { font-size:22px; font-weight:700; color:#1b5e20; }
+  .menu { margin-left:auto; display:flex; gap:8px; }
+  .btn { background:#fff; border-radius:10px; padding:8px 14px; cursor:pointer; box-shadow:0 4px rgba(0,0,0,0.08); }
+  .main { padding:10px 20px; display:flex; gap:20px; height:calc(100% - 80px); }
+  .left, .right { flex:1; display:flex; flex-direction:column; gap:12px; }
+  .stage { flex:1; background: linear-gradient(#c8f0d0,#e7faec); border-radius:12px; padding:12px; position:relative; overflow:hidden; }
+  .hud { display:flex; gap:12px; align-items:center; }
+  .badge { background:rgba(255,255,255,0.7); padding:6px 10px; border-radius:10px; font-weight:600; }
+  .riko { width:100px; position:absolute; left:40px; bottom:30px; transition:transform .2s; }
+  .object { width:88px; cursor:grab; user-select:none; }
+  .dropzone { width:120px; height:120px; border-radius:12px; background:rgba(255,255,255,0.4); display:flex; align-items:center; justify-content:center; border:2px dashed rgba(0,0,0,0.08); }
+  .toolbar { display:flex; gap:8px; align-items:center; }
+  .feedback { position:absolute; left:50%; transform:translateX(-50%); top:20px; background:#fff; padding:8px 16px; border-radius:12px; display:none; box-shadow:0 8px 20px rgba(0,0,0,0.12); font-weight:700; }
+  .hidden { display:none; }
+  .center { display:flex; align-items:center; justify-content:center; height:100%; flex-direction:column; gap:10px; }
+  .choice { background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer; box-shadow: 0 4px rgba(0,0,0,0.08); }
+  .footer { height:48px; display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:linear-gradient(#ffffff00,#ffffff22); border-top:1px solid rgba(0,0,0,0.03); }
+  .certificate { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); }
+  .card { background:#fff; padding:22px; border-radius:12px; width:600px; text-align:center; }
+  .stars { font-size:26px; color:#f59e0b; }
+  /* responsive */
+  @media (max-width:1100px) { .game-wrap { width:95%; height:80vh; } }
+</style>
+</head>
+<body>
+<div class="screen">
+  <div class="game-wrap" id="game">
+
+    <header>
+      <img src="" alt="logo" style="width:54px;height:54px;border-radius:8px;background:linear-gradient(#ffe, #ffd)">
+      <div class="title">Petualangan Riko di Hutan Ekosistem</div>
+      <div class="menu">
+        <div id="btn-help" class="btn">Petunjuk</div>
+        <div id="btn-restart" class="btn">Mulai Ulang</div>
+      </div>
+    </header>
+
+    <div class="main">
+      <div class="left">
+        <div class="hud">
+          <div class="badge">Level: <span id="level-num">1</span></div>
+          <div class="badge">Skor: <span id="score">0</span></div>
+          <div class="badge">Nyawa: <span id="lives">3</span></div>
+        </div>
+        <div class="stage" id="stage-area">
+          <!-- Stage content injected here -->
+          <div id="riko" class="riko" title="Riko">
+            <!-- simple cartoon Riko using SVG -->
+            <svg width="100" height="140" viewBox="0 0 100 140">
+              <defs><linearGradient id="g1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffd59e"/><stop offset="1" stop-color="#ffb86b"/></linearGradient></defs>
+              <rect x="10" y="40" width="80" height="80" rx="12" fill="#6ee7b7"></rect>
+              <circle cx="50" cy="30" r="22" fill="url(#g1)"></circle>
+              <circle cx="42" cy="28" r="3" fill="#333"></circle>
+              <circle cx="58" cy="28" r="3" fill="#333"></circle>
+              <path d="M40 36 q10 8 20 0" fill="none" stroke="#6b361d" stroke-linecap="round" stroke-width="2"></path>
+            </svg>
+          </div>
+          <div id="feedback" class="feedback"></div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="center" id="menu-screen">
+          <h2>Selamat datang, Penjelajah!</h2>
+          <p>Bantu Riko mengembalikan keseimbangan hutan dengan menyelesaikan misi rantai makanan.</p>
+          <div style="display:flex;gap:12px;margin-top:12px;">
+            <div id="start-btn" class="btn">▶️ Mulai Game</div>
+            <div id="how-btn" class="btn">📘 Cara Main</div>
+          </div>
+        </div>
+
+        <!-- Level containers -->
+        <div id="level1" class="center hidden">
+          <h3>Level 1 — Jejak Produsen</h3>
+          <p>Kumpulkan tumbuhan dan pasangkan ke hewan herbivora yang tepat.</p>
+          <div style="display:flex;gap:12px;align-items:center;margin-top:10px;">
+            <div id="plants" style="display:flex;flex-direction:column;gap:8px;">
+              <!-- draggable plants -->
+            </div>
+            <div style="flex:1;display:flex;gap:12px;align-items:center;justify-content:center;">
+              <div class="dropzone" data-animal="sapi"><div>sapi</div></div>
+              <div class="dropzone" data-animal="ulat"><div>ulat</div></div>
+              <div class="dropzone" data-animal="burung"><div>burung</div></div>
+            </div>
+          </div>
+          <div style="margin-top:12px;"><div id="next1" class="btn">Lanjut</div></div>
+        </div>
+
+        <div id="level2" class="center hidden">
+          <h3>Level 2 — Susun Rantai Makanan</h3>
+          <p>Susun urutan dari produsen hingga predator puncak (seret gambar ke kotak urutan).</p>
+          <div id="chain-area" style="display:flex;gap:12px;align-items:center;margin-top:12px;">
+            <div id="pool" style="display:flex;gap:8px;"></div>
+            <div id="slots" style="display:flex;gap:8px;">
+              <div class="dropzone slot" data-index="0"><small>1</small></div>
+              <div class="dropzone slot" data-index="1"><small>2</small></div>
+              <div class="dropzone slot" data-index="2"><small>3</small></div>
+              <div class="dropzone slot" data-index="3"><small>4</small></div>
+              <div class="dropzone slot" data-index="4"><small>5</small></div>
+            </div>
+          </div>
+          <div style="margin-top:12px;"><div id="check-chain" class="btn">Periksa Urutan</div></div>
+        </div>
+
+        <div id="level3" class="center hidden">
+          <h3>Level 3 — Lawan Raja Predator</h3>
+          <p>Jawab 5 soal pilihan ganda untuk mengalahkan elang raksasa!</p>
+          <div id="quiz-area" style="width:100%;max-width:520px;margin-top:12px;"></div>
+          <div style="margin-top:12px;"><div id="finish-btn" class="btn hidden">Selesai</div></div>
+        </div>
+
+        <div id="end-screen" class="center hidden">
+          <h3>Permainan Selesai</h3>
+          <p id="end-text"></p>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <div id="replay" class="btn">Main Lagi</div>
+            <div id="download-cert" class="btn">Simpan Sertifikat</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>Made for learning • Riko's Adventure</div>
+      <div>Suara: Narasi & Efek • Bahasa: Indonesia</div>
+    </div>
+
+    <!-- certificate modal -->
+    <div id="certificate" class="certificate hidden">
+      <div class="card">
+        <h2>Sertifikat Penjelajah Ekosistem</h2>
+        <p id="cert-name">Untuk: Penjelajah Hebat</p>
+        <div class="stars" id="cert-stars">⭐⭐⭐</div>
+        <p id="cert-text">Selamat! Kamu membantu Riko mengembalikan keseimbangan hutan.</p>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
+          <div id="close-cert" class="btn">Tutup</div>
+          <div id="save-cert" class="btn">Unduh PNG</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Simple helper for sounds using Web Audio API
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+const ctx = AudioCtx ? new AudioCtx() : null;
+function beep(freq=440,dur=0.12,vol=0.05) {
+  if(!ctx) return;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type='sine'; o.frequency.value=freq;
+  g.gain.value=vol;
+  o.connect(g); g.connect(ctx.destination);
+  o.start(); o.stop(ctx.currentTime+dur);
+}
+
+// Speech helper (Indonesian)
+function speak(text, opts={}){
+  try{
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='id-ID';
+    if(opts.rate) u.rate=opts.rate;
+    if(opts.pitch) u.pitch=opts.pitch;
+    if(opts.voice) u.voice=opts.voice;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }catch(e){ console.log('speak err',e); }
+}
+
+// Game state
+let state = { level:0, score:0, lives:3 };
+
+const stage = document.getElementById('stage-area');
+const levelNum = document.getElementById('level-num');
+const scoreEl = document.getElementById('score');
+const livesEl = document.getElementById('lives');
+const feedback = document.getElementById('feedback');
+
+function showFeedback(text, ok=true){
+  feedback.textContent=text;
+  feedback.style.display='block';
+  feedback.style.background = ok ? '#dff6e3' : '#ffd6d6';
+  setTimeout(()=> feedback.style.display='none',1800);
+}
+
+// Setup menu
+document.getElementById('start-btn').addEventListener('click', ()=> startGame());
+document.getElementById('start-btn').addEventListener('touchstart', ()=> startGame());
+document.getElementById('how-btn').addEventListener('click', ()=> showHelp());
+document.getElementById('btn-help').addEventListener('click', ()=> showHelp());
+document.getElementById('btn-restart').addEventListener('click', ()=> restartAll());
+document.getElementById('replay').addEventListener('click', ()=> restartAll());
+
+function showHelp(){
+  alert("Cara main:\\n1) Level 1: seret tumbuhan ke hewan yang memakannya.\\n2) Level 2: susun urutan rantai makanan (5 organisme).\\n3) Level 3: jawab 5 soal pilihan ganda.\\nGunakan tombol 'Mulai' untuk memulai.");
+  speak("Buka petunjuk permainan. Seret dan lepas tumbuhan, susun rantai makanan, dan jawab soal untuk mengalahkan Raja Predator.",{rate:0.95});
+}
+
+// Start game
+function startGame(){
+  state={level:1,score:0,lives:3};
+  updateHud();
+  document.getElementById('menu-screen').classList.add('hidden');
+  loadLevel1();
+  speak("Ayo mulai petualangan! Aku Riko, mari kita bantu hutan.",{rate:1, pitch:1.2});
+}
+
+// Restart full
+function restartAll(){
+  window.location.reload();
+}
+
+// Update HUD
+function updateHud(){ levelNum.textContent=state.level; scoreEl.textContent=state.score; livesEl.textContent=state.lives; }
+
+// Level 1
+const plantsData = [
+  { id:'rumput', label:'Rumput', matches:'sapi' },
+  { id:'daun', label:'Daun', matches:'ulat' },
+  { id:'biji', label:'Biji', matches:'burung' }
+];
+function loadLevel1(){
+  state.level=1; updateHud();
+  hideAllLevels(); document.getElementById('level1').classList.remove('hidden');
+  // fill plants area
+  const plants = document.getElementById('plants');
+  plants.innerHTML='';
+  plantsData.forEach(p=>{
+    const el = document.createElement('div');
+    el.className='object';
+    el.draggable=true;
+    el.dataset.id=p.id;
+    el.innerHTML = `<svg width="88" height="88"><rect rx="12" width="88" height="88" fill="#fff"/><text x="44" y="52" font-size="14" text-anchor="middle">${p.label}</text></svg>`;
+    plants.appendChild(el);
+    el.addEventListener('dragstart', ev=> ev.dataTransfer.setData('text/plain', p.id));
+  });
+  // dropzones
+  document.querySelectorAll('#level1 .dropzone').forEach(dz=>{
+    dz.addEventListener('dragover', ev=> ev.preventDefault());
+    dz.addEventListener('drop', ev=>{
+      ev.preventDefault();
+      const pid = ev.dataTransfer.getData('text/plain');
+      const animal = dz.dataset.animal;
+      const plant = plantsData.find(x=>x.id===pid);
+      if(plant && plant.matches===animal){
+        dz.innerHTML = `<div style="text-align:center">${animal}<br/><small>✓ ${plant.label}</small></div>`;
+        speak("Benar! "+plant.label+" dimakan oleh "+animal,{rate:1, pitch:1.2});
+        state.score += 10; updateHud(); beep(880,0.08,0.05);
+        dz.style.border='2px solid #16a34a';
+      } else {
+        speak("Coba lagi", {rate:1}); state.lives--; updateHud(); beep(220,0.12,0.06);
+        showFeedback("Salah, coba cocokan tanaman yang tepat.", false);
+      }
+    });
+  });
+  document.getElementById('next1').onclick = ()=> loadLevel2();
+}
+
+// Level 2
+const chainPool = [
+  { id:'rumput', label:'Rumput' },
+  { id:'ulat', label:'Ulat' },
+  { id:'burung', label:'Burung' },
+  { id:'ular', label:'Ular' },
+  { id:'elang', label:'Elang' }
+];
+const correctOrder = ['rumput','ulat','burung','ular','elang'];
+function loadLevel2(){
+  state.level=2; updateHud();
+  hideAllLevels(); document.getElementById('level2').classList.remove('hidden');
+  const pool = document.getElementById('pool');
+  pool.innerHTML='';
+  chainPool.forEach(item=>{
+    const el = document.createElement('div');
+    el.className='object';
+    el.draggable=true;
+    el.dataset.id=item.id;
+    el.innerHTML = `<svg width="80" height="80"><rect rx="8" width="80" height="80" fill="#fff"/><text x="40" y="44" font-size="12" text-anchor="middle">${item.label}</text></svg>`;
+    pool.appendChild(el);
+    el.addEventListener('dragstart', ev=> ev.dataTransfer.setData('text/plain', item.id));
+  });
+  // slots
+  document.querySelectorAll('#level2 .slot').forEach(s=>{
+    s.innerHTML='';
+    s.addEventListener('dragover', ev=> ev.preventDefault());
+    s.addEventListener('drop', ev=>{
+      ev.preventDefault();
+      const pid = ev.dataTransfer.getData('text/plain');
+      const item = chainPool.find(x=>x.id===pid);
+      if(item){
+        s.innerHTML = `<div style="text-align:center">${item.label}</div>`;
+        s.dataset.id = pid;
+        beep(660,0.06,0.04);
+      }
+    });
+  });
+  document.getElementById('check-chain').onclick = ()=> {
+    const slots = Array.from(document.querySelectorAll('#level2 .slot'));
+    const ids = slots.map(s=>s.dataset.id || '');
+    let ok = ids.join(',') === correctOrder.join(',');
+    if(ok){
+      speak("Urutan benar. Jembatan ekosistem terbuka!",{rate:1});
+      state.score += 30; updateHud(); showFeedback("Urutan benar! Lanjut ke Level 3.", true); setTimeout(()=> loadLevel3(),900);
+    } else {
+      speak("Urutan belum benar, coba pikir lagi.",{rate:1}); state.lives--; updateHud(); showFeedback("Urutan salah. Periksa lagi.", false);
+    }
+  };
+}
+
+// Level 3 (Quiz)
+const quizQuestions = [
+  {q:"Organisme yang mampu membuat makanannya sendiri disebut?", choices:["Konsumen","Produsen","Predator","Detritivor"], a:1},
+  {q:"Peran ular dalam rantai makanan biasanya sebagai?", choices:["Produsen","Konsumen I","Konsumen II","Detritivor"], a:2},
+  {q:"Jika jumlah ulat menurun, yang mungkin terjadi adalah?", choices:["Jumlah elang bertambah","Burung kekurangan makanan","Rumput menurun","Tidak ada perubahan"], a:1},
+  {q:"Contoh produsen pada ekosistem hutan adalah?", choices:["Elang","Rumput","Ular","Burung"], a:1},
+  {q:"Organisme yang memakan segala jenis makanan disebut?", choices:["Herbivora","Karnivora","Omnivora","Detritivor"], a:2}
+];
+function loadLevel3(){
+  state.level=3; updateHud();
+  hideAllLevels(); document.getElementById('level3').classList.remove('hidden');
+  const quizArea = document.getElementById('quiz-area');
+  quizArea.innerHTML='';
+  let idx=0; let correctCount=0;
+  function showQ(){
+    quizArea.innerHTML='';
+    const q = quizQuestions[idx];
+    const card = document.createElement('div');
+    card.style.background='#fff'; card.style.padding='12px'; card.style.borderRadius='10px'; card.style.boxShadow='0 8px rgba(0,0,0,0.06)';
+    const h = document.createElement('div'); h.innerHTML = `<strong>Soal ${idx+1}:</strong> ${q.q}`;
+    card.appendChild(h);
+    q.choices.forEach((ch,i)=>{
+      const btn = document.createElement('div'); btn.className='choice'; btn.style.marginTop='8px'; btn.textContent = ch;
+      btn.onclick = ()=>{
+        if(i===q.a){ correctCount++; state.score+=15; speak("Jawaban benar", {rate:1}); beep(880,0.08,0.05); showFeedback("Benar!", true); }
+        else { state.lives--; speak("Jawaban salah", {rate:1}); beep(220,0.12,0.06); showFeedback("Salah!", false); }
+        updateHud();
+        idx++;
+        if(idx<quizQuestions.length) setTimeout(showQ,700);
+        else setTimeout(()=> finishGame(correctCount),700);
+      };
+      card.appendChild(btn);
+    });
+    quizArea.appendChild(card);
+  }
+  showQ();
+}
+
+// Finish and certificate
+function finishGame(correctCount){
+  document.getElementById('level3').classList.add('hidden');
+  document.getElementById('end-screen').classList.remove('hidden');
+  document.getElementById('end-text').textContent = `Skormu ${state.score}. Kamu menjawab ${correctCount} dari ${quizQuestions.length} soal dengan benar.`;
+  // show certificate modal
+  const cert = document.getElementById('certificate');
+  cert.classList.remove('hidden');
+  const stars = Math.min(3, Math.ceil(state.score/50));
+  document.getElementById('cert-stars').textContent = '⭐'.repeat(stars);
+  document.getElementById('cert-name').textContent = 'Untuk: Penjelajah Hebat';
+  speak("Selamat! Kamu berhasil membantu Riko mengembalikan keseimbangan hutan.",{rate:1, pitch:1.1});
+  document.getElementById('close-cert').onclick = ()=> cert.classList.add('hidden');
+  document.getElementById('save-cert').onclick = ()=> downloadCertificate();
+  document.getElementById('download-cert').onclick = ()=> downloadCertificate();
+}
+
+function downloadCertificate(){
+  const card = document.querySelector('#certificate .card');
+  // simple canvas capture
+  const svgData = `<svg xmlns='http://www.w3.org/2000/svg' width='800' height='600'><foreignObject width='100%' height='100%'>`+
+    `<div xmlns='http://www.w3.org/1999/xhtml' style='font-family:Segoe UI, Roboto, Arial; padding:20px; width:760px; height:560px; background:linear-gradient(#fff,#dff7e6); border-radius:12px; text-align:center;'>`+
+    `<h1 style='color:#1b5e20;'>Sertifikat Penjelajah Ekosistem</h1>`+
+    `<p style='font-size:20px;'>${document.getElementById('cert-name').textContent}</p>`+
+    `<p style='font-size:18px;'>Skor: ${state.score}</p>`+
+    `<p>${document.getElementById('cert-text').textContent}</p>`+
+    `</div></foreignObject></svg>`;
+  const img = new Image();
+  const svg = new Blob([svgData], {type:'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(svg);
+  img.onload = ()=>{
+    const c = document.createElement('canvas');
+    c.width=800; c.height=600;
+    const ctx2 = c.getContext('2d');
+    ctx2.drawImage(img,0,0);
+    URL.revokeObjectURL(url);
+    const png = c.toDataURL('image/png');
+    const a = document.createElement('a'); a.href=png; a.download='sertifikat_penjelajah.png'; a.click();
+  };
+  img.src = url;
+}
+
+// utilities
+function hideAllLevels(){
+  document.getElementById('level1').classList.add('hidden');
+  document.getElementById('level2').classList.add('hidden');
+  document.getElementById('level3').classList.add('hidden');
+  document.getElementById('menu-screen').classList.add('hidden');
+  document.getElementById('end-screen').classList.add('hidden');
+}
+
+document.getElementById('save-cert').addEventListener('click', ()=> {});
+document.getElementById('download-cert').addEventListener('click', ()=> {});
+
+// Autoplay hint: some browsers block audio until user interacts
+document.addEventListener('click', ()=> { if(ctx) ctx.resume && ctx.resume(); });
+
+// small intro
+setTimeout(()=>{
+  // idle intro on menu
+  const s = document.querySelector('#menu-screen h2');
+  if(s) s.textContent = "Selamat datang, Penjelajah!";
+},350);
+
+</script>
+</body>
+</html>
